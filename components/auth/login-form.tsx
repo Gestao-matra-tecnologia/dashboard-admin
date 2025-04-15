@@ -28,13 +28,16 @@ export function LoginForm() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Verificação simplificada - em produção, isso seria feito no servidor
-      if (email === "admin@matra.tech" && password === "admin123") {
+      if (
+        (email === "admin@matra.tech" && password === "admin123") ||
+        (email === "jjdesigner77@gmail.com" && password === "Qweasdzxc123!")
+      ) {
         // Armazenar informações do usuário no localStorage
         localStorage.setItem(
           "user",
           JSON.stringify({
             email,
-            name: "Administrador",
+            name: email === "jjdesigner77@gmail.com" ? "JJ Designer" : "Administrador",
             role: "admin",
           }),
         )
