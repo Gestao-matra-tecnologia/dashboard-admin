@@ -66,9 +66,15 @@ function AppSidebar() {
     setMounted(true)
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error("Erro ao analisar dados do usuário:", error)
+        localStorage.removeItem("user")
+        router.push("/auth/login")
+      }
     }
-  }, [])
+  }, [router])
 
   const handleLogout = () => {
     localStorage.removeItem("user")

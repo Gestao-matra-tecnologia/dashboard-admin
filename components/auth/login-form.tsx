@@ -16,51 +16,47 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const router = useRouter()
   const { toast } = useToast()
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault()
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsLoading(true)
+    setError("")
 
     try {
-      // Simulação de login - em produção, isso seria substituído pela autenticação real
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Verificação simplificada - em produção, isso seria feito no servidor
+      // Simulação de verificação de credenciais
       if (
-        (email === "admin@matra.tech" && password === "admin123") ||
+        (email === "admin@matra.com" && password === "admin123") ||
         (email === "jjdesigner77@gmail.com" && password === "Qweasdzxc123!")
       ) {
-        // Armazenar informações do usuário no localStorage
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            email,
-            name: email === "jjdesigner77@gmail.com" ? "JJ Designer" : "Administrador",
-            role: "admin",
-          }),
-        )
+        // Login bem-sucedido
+        const userData = {
+          name: email === "jjdesigner77@gmail.com" ? "JJ Designer" : "Administrador",
+          email: email,
+          role: "admin",
+        }
+
+        // Armazenar dados do usuário
+        localStorage.setItem("user", JSON.stringify(userData))
+
+        // Redirecionar para a página inicial após um breve delay
+        setTimeout(() => {
+          router.push("/")
+          router.refresh() // Forçar atualização da página
+        }, 500)
 
         toast({
           title: "Login realizado com sucesso",
-          description: "Bem-vindo ao Dashboard da Matra Tecnologia",
+          description: `Bem-vindo, ${userData.name}!`,
         })
-
-        router.push("/")
       } else {
-        toast({
-          variant: "destructive",
-          title: "Erro ao fazer login",
-          description: "Email ou senha incorretos",
-        })
+        throw new Error("Credenciais inválidas")
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao fazer login",
-        description: "Ocorreu um erro ao tentar fazer login",
-      })
+      console.error("Erro de login:", error)
+      setError("Email ou senha incorretos. Por favor, tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +68,7 @@ export function LoginForm() {
         <CardTitle className="text-2xl font-bold">Login</CardTitle>
         <CardDescription>Entre com suas credenciais para acessar o dashboard</CardDescription>
       </CardHeader>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -121,6 +117,7 @@ export function LoginForm() {
               </Button>
             </div>
           </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isLoading}>
