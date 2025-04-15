@@ -1,9 +1,5 @@
-import DashboardKPI from "@/components/DashboardKPI";
+import Dashboard from "@/components/dashboard"
 
 export default function Home() {
-  return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <DashboardKPI />
-    </main>
-  );
+  return <Dashboard />
 }

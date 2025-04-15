@@ -1,0 +1,169 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      incomes: {
+        Row: {
+          id: string
+          cliente: string
+          valor: number
+          data: string
+          categoria: string
+          observacoes: string
+          recorrente: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cliente: string
+          valor: number
+          data: string
+          categoria: string
+          observacoes?: string
+          recorrente?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cliente?: string
+          valor?: number
+          data?: string
+          categoria?: string
+          observacoes?: string
+          recorrente?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      expenses: {
+        Row: {
+          id: string
+          conta: string
+          descricao: string
+          valor: number
+          data: string
+          tipo: string
+          observacoes: string
+          pago: boolean
+          recorrente: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          conta: string
+          descricao: string
+          valor: number
+          data: string
+          tipo: string
+          observacoes?: string
+          pago?: boolean
+          recorrente?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          conta?: string
+          descricao?: string
+          valor?: number
+          data?: string
+          tipo?: string
+          observacoes?: string
+          pago?: boolean
+          recorrente?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      employees: {
+        Row: {
+          id: string
+          nome: string
+          cargo: string
+          tipoContrato: string
+          valorMensal: number
+          dataPagamento: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          cargo: string
+          tipoContrato: string
+          valorMensal: number
+          dataPagamento: string
+          status: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          cargo?: string
+          tipoContrato?: string
+          valorMensal?: number
+          dataPagamento?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      monthly_summaries: {
+        Row: {
+          id: string
+          mes: number
+          ano: number
+          totalEntradas: number
+          totalSaidas: number
+          lucroPrejuizo: number
+          metaFaturamento: number
+          metaCaixaDisponivel: number
+          observacoes: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          mes: number
+          ano: number
+          totalEntradas: number
+          totalSaidas: number
+          lucroPrejuizo: number
+          metaFaturamento?: number
+          metaCaixaDisponivel?: number
+          observacoes?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          mes?: number
+          ano?: number
+          totalEntradas?: number
+          totalSaidas?: number
+          lucroPrejuizo?: number
+          metaFaturamento?: number
+          metaCaixaDisponivel?: number
+          observacoes?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
+}
