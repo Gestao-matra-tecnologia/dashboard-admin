@@ -1,14 +1,16 @@
-// Demand Table Types
-export interface DemandItem {
+// Tipos para o dashboard
+
+// Tipo para demandas da semana
+export interface DemandTask {
   id: string
   title: string
   priority: "Alta" | "Média" | "Baixa"
-  status: "Pendente" | "Em andamento" | "Concluído"
-  assignedTo: string
+  status: "Pendente" | "Em andamento" | "Concluída"
+  assignee: string
   dueDate: string
 }
 
-// Department Goals Types
+// Tipo para metas por área
 export interface DepartmentGoal {
   id: string
   department: string
@@ -17,36 +19,7 @@ export interface DepartmentGoal {
   dueDate: string
 }
 
-// Internal Marketing Types
-export interface MarketingAction {
-  id: string
-  title: string
-  status: string
-  responsible: string
-  dueDate: string
-  progress: number
-}
-
-// Client Marketing Types
-export interface ClientMarketingAction {
-  id: string
-  title: string
-  client: string
-  status: string
-  budget: number
-  roi: number
-}
-
-// Roles Table Types
-export interface Role {
-  id: string
-  title: string
-  department: string
-  responsibilities: string
-  requiredSkills: string
-}
-
-// Employee Performance Types
+// Tipo para desempenho dos funcionários
 export interface EmployeePerformance {
   id: string
   name: string
@@ -56,7 +29,39 @@ export interface EmployeePerformance {
   rating: number
 }
 
-// Culture Actions Types
+// Tipo para marketing de clientes
+export interface ClientMarketingAction {
+  id: string
+  title: string
+  client: string
+  status: string
+  budget: number
+  roi: number
+  action?: string
+  date?: string
+  responsible?: string
+}
+
+// Tipo para marketing interno
+export interface InternalMarketingAction {
+  id: string
+  title: string
+  description: string
+  status: string
+  responsible: string
+  nextDate: string
+}
+
+// Tipo para cargos e funções
+export interface Role {
+  id: string
+  title: string
+  department: string
+  responsibilities: string
+  requiredSkills: string
+}
+
+// Tipo para ações de cultura
 export interface CultureAction {
   id: string
   title: string
@@ -64,4 +69,50 @@ export interface CultureAction {
   date: string
   status: string
   responsible: string
+}
+
+// Tipo para produtos e serviços
+export interface ProductService {
+  id: string
+  name: string
+  type: "product" | "service"
+  price: number
+  status: "active" | "inactive"
+}
+
+// Tipo para dados do funil de vendas
+export interface FunnelData {
+  leads: number
+  inProgress: number
+  closed: number
+  totalValue: number
+}
+
+// Tipo para métricas de visão geral
+export interface OverviewMetrics {
+  totalRevenue: number
+  totalExpenses: number
+  profit: number
+  clients: number
+  projects: number
+  tasks: number
+}
+
+// Tipo para notificações
+export interface Notification {
+  id: string
+  title: string
+  message: string
+  type: "info" | "success" | "warning" | "error"
+  read: boolean
+  createdAt: string
+}
+
+// Tipo para usuário
+export interface User {
+  id?: string
+  name: string
+  email: string
+  role: "admin" | "manager" | "user"
+  avatar?: string
 }

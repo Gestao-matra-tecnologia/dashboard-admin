@@ -17,3 +17,8 @@ export function useMediaQuery(query: string): boolean {
 
   return matches
 }
+
+// Adicionando o hook useMobile que estava faltando
+export function useMobile(): boolean {
+  return useMediaQuery("(max-width: 768px)")
+}

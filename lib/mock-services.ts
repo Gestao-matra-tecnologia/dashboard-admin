@@ -1,578 +1,641 @@
-import { generateId, simulateApiDelay } from "./mock-services-utils"
+import { v4 as uuidv4 } from "uuid"
 import type {
-  DemandItem,
+  DemandTask,
   DepartmentGoal,
-  MarketingAction,
-  ClientMarketingAction,
-  Role,
   EmployeePerformance,
+  ClientMarketingAction,
+  InternalMarketingAction,
+  Role,
   CultureAction,
+  ProductService,
 } from "./types"
 
-// Mock data for Demand Table
-export const mockDemands: DemandItem[] = [
+// Mock data para demandas da semana
+let mockDemands: DemandTask[] = [
   {
     id: "1",
-    title: "Implementar nova landing page",
+    title: "Desenvolver landing page",
     priority: "Alta",
     status: "Em andamento",
-    assignedTo: "João Silva",
-    dueDate: "2023-06-15",
+    assignee: "Bruno",
+    dueDate: "2025-04-20",
   },
   {
     id: "2",
-    title: "Corrigir bug no formulário de contato",
-    priority: "Alta",
+    title: "Configurar Google Analytics",
+    priority: "Média",
     status: "Pendente",
-    assignedTo: "Maria Oliveira",
-    dueDate: "2023-06-10",
+    assignee: "Luiz",
+    dueDate: "2025-04-22",
   },
   {
     id: "3",
-    title: "Atualizar conteúdo da página Sobre",
-    priority: "Média",
+    title: "Revisar conteúdo do blog",
+    priority: "Baixa",
+    status: "Concluída",
+    assignee: "Ana",
+    dueDate: "2025-04-18",
+  },
+]
+
+// Mock data para metas por área
+let mockDepartmentGoals: DepartmentGoal[] = [
+  {
+    id: "1",
+    department: "Marketing",
+    goal: "Aumentar tráfego orgânico em 30%",
+    progress: 65,
+    dueDate: "2025-06-30",
+  },
+  {
+    id: "2",
+    department: "Vendas",
+    goal: "Fechar 10 novos contratos",
+    progress: 40,
+    dueDate: "2025-05-31",
+  },
+  {
+    id: "3",
+    department: "Desenvolvimento",
+    goal: "Lançar nova versão do app",
+    progress: 80,
+    dueDate: "2025-04-25",
+  },
+]
+
+// Mock data para desempenho dos funcionários
+let mockEmployeePerformance: EmployeePerformance[] = [
+  {
+    id: "1",
+    name: "Bruno Silva",
+    position: "Desenvolvedor Full Stack",
+    department: "Tecnologia",
+    achievements: "Implementou nova arquitetura de microserviços",
+    rating: 92,
+  },
+  {
+    id: "2",
+    name: "Luiz Oliveira",
+    position: "Especialista em Tráfego",
+    department: "Marketing",
+    achievements: "Reduziu CPA em 25%",
+    rating: 88,
+  },
+  {
+    id: "3",
+    name: "Ana Costa",
+    position: "Designer UX/UI",
+    department: "Design",
+    achievements: "Redesenhou interface principal",
+    rating: 95,
+  },
+]
+
+// Mock data para marketing de clientes
+let mockClientMarketing: ClientMarketingAction[] = [
+  {
+    id: "1",
+    title: "Campanha Facebook Ads",
+    client: "Alpha Móveis",
+    status: "Ativo",
+    budget: 5000,
+    roi: 2.5,
+  },
+  {
+    id: "2",
+    title: "Email Marketing",
+    client: "Spotform",
+    status: "Planejamento",
+    budget: 1200,
+    roi: 0,
+  },
+  {
+    id: "3",
+    title: "SEO Local",
+    client: "Clínica Saúde Total",
     status: "Concluído",
-    assignedTo: "Pedro Santos",
-    dueDate: "2023-06-05",
-  },
-  {
-    id: "4",
-    title: "Otimizar SEO do site principal",
-    priority: "Alta",
-    status: "Em andamento",
-    assignedTo: "Ana Costa",
-    dueDate: "2023-06-20",
-  },
-  {
-    id: "5",
-    title: "Criar campanha de email marketing",
-    priority: "Média",
-    status: "Pendente",
-    assignedTo: "Carlos Ferreira",
-    dueDate: "2023-06-25",
+    budget: 3500,
+    roi: 3.2,
   },
 ]
 
-// Mock data for Department Goals
-export const mockDepartmentGoals: DepartmentGoal[] = [
-  { id: "1", department: "Marketing", goal: "Aumentar tráfego orgânico em 20%", progress: 65, dueDate: "2023-06-30" },
-  { id: "2", department: "Vendas", goal: "Fechar 15 novos contratos", progress: 40, dueDate: "2023-06-30" },
-  { id: "3", department: "Desenvolvimento", goal: "Lançar 2 novos recursos", progress: 80, dueDate: "2023-06-15" },
-  { id: "4", department: "Suporte", goal: "Reduzir tempo de resposta para 2h", progress: 90, dueDate: "2023-06-10" },
-  { id: "5", department: "RH", goal: "Contratar 3 novos desenvolvedores", progress: 33, dueDate: "2023-07-15" },
-]
-
-// Mock data for Internal Marketing
-export const mockInternalMarketing: MarketingAction[] = [
+// Mock data para marketing interno
+let mockInternalMarketing: InternalMarketingAction[] = [
   {
     id: "1",
-    title: "Campanha de Email Interna",
-    status: "Em andamento",
-    responsible: "Maria Oliveira",
-    dueDate: "2023-06-20",
-    progress: 75,
+    title: "Newsletter semanal",
+    description: "Comunicação interna sobre atualizações da empresa",
+    status: "Recorrente",
+    responsible: "Ana",
+    nextDate: "2025-04-22",
   },
   {
     id: "2",
-    title: "Newsletter Semanal",
-    status: "Recorrente",
-    responsible: "João Silva",
-    dueDate: "Toda sexta",
-    progress: 100,
+    title: "Treinamento de marca",
+    description: "Workshop sobre valores e identidade da empresa",
+    status: "Planejado",
+    responsible: "Carlos",
+    nextDate: "2025-05-10",
   },
   {
     id: "3",
-    title: "Treinamento de Produto",
-    status: "Pendente",
-    responsible: "Carlos Ferreira",
-    dueDate: "2023-06-25",
-    progress: 0,
-  },
-  {
-    id: "4",
-    title: "Documentação de Processos",
+    title: "Pesquisa de satisfação",
+    description: "Avaliação do clima organizacional",
     status: "Em andamento",
-    responsible: "Ana Costa",
-    dueDate: "2023-07-05",
-    progress: 50,
+    responsible: "Juliana",
+    nextDate: "2025-04-25",
   },
 ]
 
-// Mock data for Client Marketing
-export const mockClientMarketing: ClientMarketingAction[] = [
-  { id: "1", title: "Campanha Google Ads", client: "Tech Solutions", status: "Ativo", budget: 5000, roi: 2.5 },
-  { id: "2", title: "Redesign de Site", client: "Eco Friendly", status: "Em andamento", budget: 8000, roi: 0 },
-  { id: "3", title: "SEO Mensal", client: "Global Services", status: "Ativo", budget: 2000, roi: 3.2 },
-  { id: "4", title: "Campanha de Mídia Social", client: "Local Store", status: "Planejamento", budget: 1500, roi: 0 },
-  { id: "5", title: "Email Marketing", client: "Health Care", status: "Ativo", budget: 1000, roi: 4.0 },
-]
-
-// Mock data for Roles Table
-export const mockRoles: Role[] = [
+// Mock data para cargos e funções
+let mockRoles: Role[] = [
   {
     id: "1",
-    title: "Desenvolvedor Frontend",
-    department: "Desenvolvimento",
-    responsibilities: "Implementação de interfaces, manutenção de código",
-    requiredSkills: "React, TypeScript, HTML, CSS",
+    title: "Desenvolvedor Full Stack",
+    department: "Tecnologia",
+    responsibilities: "Desenvolvimento de aplicações web e mobile, manutenção de sistemas existentes",
+    requiredSkills: "React, Node.js, TypeScript, MongoDB",
   },
   {
     id: "2",
-    title: "Desenvolvedor Backend",
-    department: "Desenvolvimento",
-    responsibilities: "Desenvolvimento de APIs, banco de dados",
-    requiredSkills: "Node.js, Python, SQL, MongoDB",
+    title: "Especialista em Tráfego",
+    department: "Marketing",
+    responsibilities: "Gestão de campanhas pagas, otimização de conversão, análise de métricas",
+    requiredSkills: "Google Ads, Facebook Ads, Analytics, Excel avançado",
   },
   {
     id: "3",
     title: "Designer UX/UI",
     department: "Design",
-    responsibilities: "Criação de wireframes, protótipos e design visual",
-    requiredSkills: "Figma, Adobe XD, Princípios de UX",
-  },
-  {
-    id: "4",
-    title: "Gerente de Projetos",
-    department: "Gestão",
-    responsibilities: "Coordenação de equipes, planejamento, relatórios",
-    requiredSkills: "Metodologias ágeis, MS Project, liderança",
-  },
-  {
-    id: "5",
-    title: "Especialista em Marketing",
-    department: "Marketing",
-    responsibilities: "Campanhas, análise de métricas, estratégias",
-    requiredSkills: "Google Analytics, SEO, Copywriting",
+    responsibilities: "Criação de interfaces, prototipagem, testes de usabilidade",
+    requiredSkills: "Figma, Adobe XD, Princípios de UX, Design Systems",
   },
 ]
 
-// Mock data for Employee Performance
-export const mockEmployeePerformance: EmployeePerformance[] = [
+// Mock data para ações de cultura
+let mockCultureActions: CultureAction[] = [
   {
     id: "1",
-    name: "Ana Costa",
-    position: "Desenvolvedora Frontend",
-    department: "Desenvolvimento",
-    achievements: "Implementou novo sistema de design, reduziu bugs em 30%",
-    rating: 95,
-  },
-  {
-    id: "2",
-    name: "Carlos Ferreira",
-    position: "Gerente de Projetos",
-    department: "Gestão",
-    achievements: "Entregou 5 projetos no prazo, melhorou processos internos",
-    rating: 90,
-  },
-  {
-    id: "3",
-    name: "Maria Oliveira",
-    position: "Designer UX/UI",
-    department: "Design",
-    achievements: "Redesign completo da interface, aumentou conversões em 25%",
-    rating: 88,
-  },
-  {
-    id: "4",
-    name: "João Silva",
-    position: "Desenvolvedor Backend",
-    department: "Desenvolvimento",
-    achievements: "Otimizou APIs, implementou novo sistema de cache",
-    rating: 85,
-  },
-  {
-    id: "5",
-    name: "Pedro Santos",
-    position: "Especialista em Marketing",
-    department: "Marketing",
-    achievements: "Aumentou tráfego orgânico em 40%, melhorou CTR em 15%",
-    rating: 82,
-  },
-]
-
-// Mock data for Culture Actions
-export const mockCultureActions: CultureAction[] = [
-  {
-    id: "1",
-    title: "Happy Hour Mensal",
-    description: "Encontro informal para integração da equipe",
+    title: "Happy Hour Virtual",
+    description: "Momento de descontração e integração entre equipes",
     date: "Última sexta do mês",
     status: "Recorrente",
     responsible: "RH",
   },
   {
     id: "2",
-    title: "Workshop de Inovação",
-    description: "Sessão para discutir novas ideias e tendências",
-    date: "2023-06-20",
+    title: "Programa de Mentoria",
+    description: "Desenvolvimento profissional através de mentoria interna",
+    date: "2025-05-01",
     status: "Planejado",
     responsible: "Diretoria",
   },
   {
     id: "3",
-    title: "Programa de Reconhecimento",
-    description: "Premiação mensal para destaques da equipe",
-    date: "Mensal",
-    status: "Ativo",
-    responsible: "Gestores",
-  },
-  {
-    id: "4",
-    title: "Pesquisa de Clima",
-    description: "Avaliação do ambiente de trabalho e satisfação",
-    date: "2023-07-10",
+    title: "Dia de Voluntariado",
+    description: "Ação social em instituição local",
+    date: "2025-06-15",
     status: "Planejado",
-    responsible: "RH",
-  },
-  {
-    id: "5",
-    title: "Dia de Trabalho Remoto",
-    description: "Um dia por semana para trabalho em casa",
-    date: "Semanal",
-    status: "Ativo",
-    responsible: "Todos",
+    responsible: "Comitê de Cultura",
   },
 ]
 
-// Mock service functions
-export const fetchDemands = async (): Promise<DemandItem[]> => {
-  // Simulate API delay
-  await simulateApiDelay()
-  return [...mockDemands]
-}
-
-export const addDemand = async (demand: Omit<DemandItem, "id">): Promise<DemandItem> => {
-  // Simulate API delay
-  await simulateApiDelay()
-  const newDemand = {
-    ...demand,
-    id: generateId(),
-  }
-  mockDemands.push(newDemand)
-  return newDemand
-}
-
-export const updateDemand = async (id: string, demand: Partial<DemandItem>): Promise<DemandItem> => {
-  // Simulate API delay
-  await simulateApiDelay()
-  const index = mockDemands.findIndex((d) => d.id === id)
-  if (index === -1) throw new Error("Demand not found")
-
-  mockDemands[index] = { ...mockDemands[index], ...demand }
-  return mockDemands[index]
-}
-
-export const deleteDemand = async (id: string): Promise<void> => {
-  // Simulate API delay
-  await simulateApiDelay()
-  const index = mockDemands.findIndex((d) => d.id === id)
-  if (index === -1) throw new Error("Demand not found")
-
-  mockDemands.splice(index, 1)
-}
-
-// Department Goals services
-export const fetchDepartmentGoals = async (): Promise<DepartmentGoal[]> => {
-  await simulateApiDelay()
-  return [...mockDepartmentGoals]
-}
-
-export const addDepartmentGoal = async (goal: Omit<DepartmentGoal, "id">): Promise<DepartmentGoal> => {
-  await simulateApiDelay()
-  const newGoal = {
-    ...goal,
-    id: generateId(),
-  }
-  mockDepartmentGoals.push(newGoal)
-  return newGoal
-}
-
-export const updateDepartmentGoal = async (id: string, goal: Partial<DepartmentGoal>): Promise<DepartmentGoal> => {
-  await simulateApiDelay()
-  const index = mockDepartmentGoals.findIndex((g) => g.id === id)
-  if (index === -1) throw new Error("Goal not found")
-
-  mockDepartmentGoals[index] = { ...mockDepartmentGoals[index], ...goal }
-  return mockDepartmentGoals[index]
-}
-
-export const deleteDepartmentGoal = async (id: string): Promise<void> => {
-  await simulateApiDelay()
-  const index = mockDepartmentGoals.findIndex((g) => g.id === id)
-  if (index === -1) throw new Error("Goal not found")
-
-  mockDepartmentGoals.splice(index, 1)
-}
-
-// Internal Marketing services
-export const fetchInternalMarketing = async (): Promise<MarketingAction[]> => {
-  await simulateApiDelay()
-  return [...mockInternalMarketing]
-}
-
-export const addInternalMarketing = async (action: Omit<MarketingAction, "id">): Promise<MarketingAction> => {
-  await simulateApiDelay()
-  const newAction = {
-    ...action,
-    id: generateId(),
-  }
-  mockInternalMarketing.push(newAction)
-  return newAction
-}
-
-export const updateInternalMarketing = async (
-  id: string,
-  action: Partial<MarketingAction>,
-): Promise<MarketingAction> => {
-  await simulateApiDelay()
-  const index = mockInternalMarketing.findIndex((a) => a.id === id)
-  if (index === -1) throw new Error("Action not found")
-
-  mockInternalMarketing[index] = { ...mockInternalMarketing[index], ...action }
-  return mockInternalMarketing[index]
-}
-
-export const deleteInternalMarketing = async (id: string): Promise<void> => {
-  await simulateApiDelay()
-  const index = mockInternalMarketing.findIndex((a) => a.id === id)
-  if (index === -1) throw new Error("Action not found")
-
-  mockInternalMarketing.splice(index, 1)
-}
-
-// Client Marketing services
-export const fetchClientMarketing = async (): Promise<ClientMarketingAction[]> => {
-  await simulateApiDelay()
-  return [...mockClientMarketing]
-}
-
-export const addClientMarketing = async (action: Omit<ClientMarketingAction, "id">): Promise<ClientMarketingAction> => {
-  await simulateApiDelay()
-  const newAction = {
-    ...action,
-    id: generateId(),
-  }
-  mockClientMarketing.push(newAction)
-  return newAction
-}
-
-export const updateClientMarketing = async (
-  id: string,
-  action: Partial<ClientMarketingAction>,
-): Promise<ClientMarketingAction> => {
-  await simulateApiDelay()
-  const index = mockClientMarketing.findIndex((a) => a.id === id)
-  if (index === -1) throw new Error("Action not found")
-
-  mockClientMarketing[index] = { ...mockClientMarketing[index], ...action }
-  return mockClientMarketing[index]
-}
-
-export const deleteClientMarketing = async (id: string): Promise<void> => {
-  await simulateApiDelay()
-  const index = mockClientMarketing.findIndex((a) => a.id === id)
-  if (index === -1) throw new Error("Action not found")
-
-  mockClientMarketing.splice(index, 1)
-}
-
-// Roles services
-export const fetchRoles = async (): Promise<Role[]> => {
-  await simulateApiDelay()
-  return [...mockRoles]
-}
-
-export const addRole = async (role: Omit<Role, "id">): Promise<Role> => {
-  await simulateApiDelay()
-  const newRole = {
-    ...role,
-    id: generateId(),
-  }
-  mockRoles.push(newRole)
-  return newRole
-}
-
-export const updateRole = async (id: string, role: Partial<Role>): Promise<Role> => {
-  await simulateApiDelay()
-  const index = mockRoles.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error("Role not found")
-
-  mockRoles[index] = { ...mockRoles[index], ...role }
-  return mockRoles[index]
-}
-
-export const deleteRole = async (id: string): Promise<void> => {
-  await simulateApiDelay()
-  const index = mockRoles.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error("Role not found")
-
-  mockRoles.splice(index, 1)
-}
-
-// Employee Performance services
-export const fetchEmployeePerformance = async (): Promise<EmployeePerformance[]> => {
-  await simulateApiDelay()
-  return [...mockEmployeePerformance]
-}
-
-export const addEmployeePerformance = async (
-  employee: Omit<EmployeePerformance, "id">,
-): Promise<EmployeePerformance> => {
-  await simulateApiDelay()
-  const newEmployee = {
-    ...employee,
-    id: generateId(),
-  }
-  mockEmployeePerformance.push(newEmployee)
-  return newEmployee
-}
-
-export const updateEmployeePerformance = async (
-  id: string,
-  employee: Partial<EmployeePerformance>,
-): Promise<EmployeePerformance> => {
-  await simulateApiDelay()
-  const index = mockEmployeePerformance.findIndex((e) => e.id === id)
-  if (index === -1) throw new Error("Employee not found")
-
-  mockEmployeePerformance[index] = { ...mockEmployeePerformance[index], ...employee }
-  return mockEmployeePerformance[index]
-}
-
-export const deleteEmployeePerformance = async (id: string): Promise<void> => {
-  await simulateApiDelay()
-  const index = mockEmployeePerformance.findIndex((e) => e.id === id)
-  if (index === -1) throw new Error("Employee not found")
-
-  mockEmployeePerformance.splice(index, 1)
-}
-
-// Culture Actions services
-export const fetchCultureActions = async (): Promise<CultureAction[]> => {
-  await simulateApiDelay()
-  return [...mockCultureActions]
-}
-
-export const addCultureAction = async (action: Omit<CultureAction, "id">): Promise<CultureAction> => {
-  await simulateApiDelay()
-  const newAction = {
-    ...action,
-    id: generateId(),
-  }
-  mockCultureActions.push(newAction)
-  return newAction
-}
-
-export const updateCultureAction = async (id: string, action: Partial<CultureAction>): Promise<CultureAction> => {
-  await simulateApiDelay()
-  const index = mockCultureActions.findIndex((a) => a.id === id)
-  if (index === -1) throw new Error("Action not found")
-
-  mockCultureActions[index] = { ...mockCultureActions[index], ...action }
-  return mockCultureActions[index]
-}
-
-export const deleteCultureAction = async (id: string): Promise<void> => {
-  await simulateApiDelay()
-  const index = mockCultureActions.findIndex((a) => a.id === id)
-  if (index === -1) throw new Error("Action not found")
-
-  mockCultureActions.splice(index, 1)
-}
-
-// Internal Marketing Campaigns (new)
-export interface InternalMarketingCampaign {
-  id: string
-  campanha: string
-  objetivo: string
-  responsavel: string
-  status: "Planejado" | "Em andamento" | "Finalizado"
-  dataDisparo: string
-  tipoConteudo: string
-}
-
-// Mock data for Internal Marketing Campaigns
-let mockInternalMarketingCampaigns: InternalMarketingCampaign[] = [
+// Mock data para produtos e serviços
+let mockProductsServices: ProductService[] = [
   {
     id: "1",
-    campanha: "Engajamento Interno",
-    objetivo: "Aumentar a participação em eventos",
-    responsavel: "Maria Oliveira",
-    status: "Em andamento",
-    dataDisparo: "2025-04-15",
-    tipoConteudo: "Email",
+    name: "Website Institucional",
+    type: "service",
+    price: 5000,
+    status: "active",
   },
   {
     id: "2",
-    campanha: "Comunicação Transparente",
-    objetivo: "Melhorar o fluxo de informações",
-    responsavel: "João Silva",
-    status: "Planejado",
-    dataDisparo: "2025-04-22",
-    tipoConteudo: "Newsletter",
+    name: "E-commerce Completo",
+    type: "service",
+    price: 12000,
+    status: "active",
+  },
+  {
+    id: "3",
+    name: "Gestão de Redes Sociais",
+    type: "service",
+    price: 1800,
+    status: "active",
+  },
+  {
+    id: "4",
+    name: "Tema WordPress Premium",
+    type: "product",
+    price: 997,
+    status: "active",
+  },
+  {
+    id: "5",
+    name: "Plugin SEO Avançado",
+    type: "product",
+    price: 497,
+    status: "inactive",
   },
 ]
 
-// Service functions for Internal Marketing Campaigns
-export const internalMarketingServices = {
-  getAll: (): InternalMarketingCampaign[] => {
-    return [...mockInternalMarketingCampaigns]
+// Serviços para Demandas da Semana
+export const demandServices = {
+  async getAll() {
+    return [...mockDemands]
   },
 
-  create: (campaign: Omit<InternalMarketingCampaign, "id">): InternalMarketingCampaign => {
-    const newCampaign: InternalMarketingCampaign = {
-      id: generateId(),
-      ...campaign,
+  async getById(id: string) {
+    return mockDemands.find((demand) => demand.id === id) || null
+  },
+
+  async create(demand: Omit<DemandTask, "id">) {
+    const newDemand = {
+      id: uuidv4(),
+      ...demand,
     }
-    mockInternalMarketingCampaigns.push(newCampaign)
-    return newCampaign
+    mockDemands.push(newDemand)
+    return newDemand
   },
 
-  update: (id: string, campaign: Partial<InternalMarketingCampaign>): InternalMarketingCampaign | undefined => {
-    const index = mockInternalMarketingCampaigns.findIndex((c) => c.id === id)
+  async update(id: string, demand: Partial<DemandTask>) {
+    const index = mockDemands.findIndex((item) => item.id === id)
     if (index !== -1) {
-      mockInternalMarketingCampaigns[index] = {
-        ...mockInternalMarketingCampaigns[index],
-        ...campaign,
-      }
-      return mockInternalMarketingCampaigns[index]
+      mockDemands[index] = { ...mockDemands[index], ...demand }
+      return mockDemands[index]
     }
-    return undefined
+    throw new Error("Demanda não encontrada")
   },
 
-  delete: (id: string): void => {
-    mockInternalMarketingCampaigns = mockInternalMarketingCampaigns.filter((c) => c.id !== id)
+  async delete(id: string) {
+    mockDemands = mockDemands.filter((demand) => demand.id !== id)
+    return true
   },
 }
 
+// Serviços para Metas por Área
+export const departmentGoalServices = {
+  async getAll() {
+    return [...mockDepartmentGoals]
+  },
+
+  async getById(id: string) {
+    return mockDepartmentGoals.find((goal) => goal.id === id) || null
+  },
+
+  async create(goal: Omit<DepartmentGoal, "id">) {
+    const newGoal = {
+      id: uuidv4(),
+      ...goal,
+    }
+    mockDepartmentGoals.push(newGoal)
+    return newGoal
+  },
+
+  async update(id: string, goal: Partial<DepartmentGoal>) {
+    const index = mockDepartmentGoals.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      mockDepartmentGoals[index] = { ...mockDepartmentGoals[index], ...goal }
+      return mockDepartmentGoals[index]
+    }
+    throw new Error("Meta não encontrada")
+  },
+
+  async delete(id: string) {
+    mockDepartmentGoals = mockDepartmentGoals.filter((goal) => goal.id !== id)
+    return true
+  },
+}
+
+// Serviços para Desempenho dos Funcionários
+export const employeePerformanceServices = {
+  async getAll() {
+    return [...mockEmployeePerformance]
+  },
+
+  async getById(id: string) {
+    return mockEmployeePerformance.find((employee) => employee.id === id) || null
+  },
+
+  async create(employee: Omit<EmployeePerformance, "id">) {
+    const newEmployee = {
+      id: uuidv4(),
+      ...employee,
+    }
+    mockEmployeePerformance.push(newEmployee)
+    return newEmployee
+  },
+
+  async update(id: string, employee: Partial<EmployeePerformance>) {
+    const index = mockEmployeePerformance.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      mockEmployeePerformance[index] = { ...mockEmployeePerformance[index], ...employee }
+      return mockEmployeePerformance[index]
+    }
+    throw new Error("Funcionário não encontrado")
+  },
+
+  async delete(id: string) {
+    mockEmployeePerformance = mockEmployeePerformance.filter((employee) => employee.id !== id)
+    return true
+  },
+}
+
+// Serviços para Marketing de Clientes
 export const clientMarketingServices = {
-  getAll: async (): Promise<ClientMarketingAction[]> => {
-    await simulateApiDelay()
+  async getAll() {
     return [...mockClientMarketing]
   },
-  create: async (action: Omit<ClientMarketingAction, "id">): Promise<ClientMarketingAction> => {
-    await simulateApiDelay()
+
+  async getById(id: string) {
+    return mockClientMarketing.find((action) => action.id === id) || null
+  },
+
+  async create(action: Omit<ClientMarketingAction, "id">) {
     const newAction = {
+      id: uuidv4(),
       ...action,
-      id: generateId(),
     }
     mockClientMarketing.push(newAction)
     return newAction
   },
-  update: async (id: string, action: Partial<ClientMarketingAction>): Promise<ClientMarketingAction | undefined> => {
-    await simulateApiDelay()
-    const index = mockClientMarketing.findIndex((a) => a.id === id)
+
+  async update(id: string, action: Partial<ClientMarketingAction>) {
+    const index = mockClientMarketing.findIndex((item) => item.id === id)
     if (index !== -1) {
       mockClientMarketing[index] = { ...mockClientMarketing[index], ...action }
       return mockClientMarketing[index]
     }
-    return undefined
+    throw new Error("Ação não encontrada")
   },
-  delete: async (id: string): Promise<void> => {
-    await simulateApiDelay()
-    mockClientMarketing.splice(
-      mockClientMarketing.findIndex((a) => a.id === id),
-      1,
-    )
+
+  async delete(id: string) {
+    mockClientMarketing = mockClientMarketing.filter((action) => action.id !== id)
+    return true
   },
+}
+
+// Serviços para Marketing Interno
+export const internalMarketingServices = {
+  async getAll() {
+    return [...mockInternalMarketing]
+  },
+
+  async getById(id: string) {
+    return mockInternalMarketing.find((action) => action.id === id) || null
+  },
+
+  async create(action: Omit<InternalMarketingAction, "id">) {
+    const newAction = {
+      id: uuidv4(),
+      ...action,
+    }
+    mockInternalMarketing.push(newAction)
+    return newAction
+  },
+
+  async update(id: string, action: Partial<InternalMarketingAction>) {
+    const index = mockInternalMarketing.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      mockInternalMarketing[index] = { ...mockInternalMarketing[index], ...action }
+      return mockInternalMarketing[index]
+    }
+    throw new Error("Ação não encontrada")
+  },
+
+  async delete(id: string) {
+    mockInternalMarketing = mockInternalMarketing.filter((action) => action.id !== id)
+    return true
+  },
+}
+
+// Serviços para Cargos e Funções
+export const roleServices = {
+  async getAll() {
+    return [...mockRoles]
+  },
+
+  async getById(id: string) {
+    return mockRoles.find((role) => role.id === id) || null
+  },
+
+  async create(role: Omit<Role, "id">) {
+    const newRole = {
+      id: uuidv4(),
+      ...role,
+    }
+    mockRoles.push(newRole)
+    return newRole
+  },
+
+  async update(id: string, role: Partial<Role>) {
+    const index = mockRoles.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      mockRoles[index] = { ...mockRoles[index], ...role }
+      return mockRoles[index]
+    }
+    throw new Error("Cargo não encontrado")
+  },
+
+  async delete(id: string) {
+    mockRoles = mockRoles.filter((role) => role.id !== id)
+    return true
+  },
+}
+
+// Serviços para Ações de Cultura
+export const cultureActionServices = {
+  async getAll() {
+    return [...mockCultureActions]
+  },
+
+  async getById(id: string) {
+    return mockCultureActions.find((action) => action.id === id) || null
+  },
+
+  async create(action: Omit<CultureAction, "id">) {
+    const newAction = {
+      id: uuidv4(),
+      ...action,
+    }
+    mockCultureActions.push(newAction)
+    return newAction
+  },
+
+  async update(id: string, action: Partial<CultureAction>) {
+    const index = mockCultureActions.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      mockCultureActions[index] = { ...mockCultureActions[index], ...action }
+      return mockCultureActions[index]
+    }
+    throw new Error("Ação não encontrada")
+  },
+
+  async delete(id: string) {
+    mockCultureActions = mockCultureActions.filter((action) => action.id !== id)
+    return true
+  },
+}
+
+// Serviços para Produtos e Serviços
+export const productsServicesServices = {
+  async getAll() {
+    return [...mockProductsServices]
+  },
+
+  async getById(id: string) {
+    return mockProductsServices.find((item) => item.id === id) || null
+  },
+
+  async create(item: Omit<ProductService, "id">) {
+    const newItem = {
+      id: uuidv4(),
+      ...item,
+    }
+    mockProductsServices.push(newItem)
+    return newItem
+  },
+
+  async update(id: string, item: Partial<ProductService>) {
+    const index = mockProductsServices.findIndex((product) => product.id === id)
+    if (index !== -1) {
+      mockProductsServices[index] = { ...mockProductsServices[index], ...item }
+      return mockProductsServices[index]
+    }
+    throw new Error("Produto/serviço não encontrado")
+  },
+
+  async delete(id: string) {
+    mockProductsServices = mockProductsServices.filter((item) => item.id !== id)
+    return true
+  },
+}
+
+// Funções auxiliares para exportação
+export async function fetchDemands() {
+  return demandServices.getAll()
+}
+
+export async function addDemand(demand: Omit<DemandTask, "id">) {
+  return demandServices.create(demand)
+}
+
+export async function updateDemand(id: string, demand: Partial<DemandTask>) {
+  return demandServices.update(id, demand)
+}
+
+export async function deleteDemand(id: string) {
+  return demandServices.delete(id)
+}
+
+export async function fetchDepartmentGoals() {
+  return departmentGoalServices.getAll()
+}
+
+export async function addDepartmentGoal(goal: Omit<DepartmentGoal, "id">) {
+  return departmentGoalServices.create(goal)
+}
+
+export async function updateDepartmentGoal(id: string, goal: Partial<DepartmentGoal>) {
+  return departmentGoalServices.update(id, goal)
+}
+
+export async function deleteDepartmentGoal(id: string) {
+  return departmentGoalServices.delete(id)
+}
+
+export async function fetchEmployeePerformance() {
+  return employeePerformanceServices.getAll()
+}
+
+export async function addEmployeePerformance(employee: Omit<EmployeePerformance, "id">) {
+  return employeePerformanceServices.create(employee)
+}
+
+export async function updateEmployeePerformance(id: string, employee: Partial<EmployeePerformance>) {
+  return employeePerformanceServices.update(id, employee)
+}
+
+export async function deleteEmployeePerformance(id: string) {
+  return employeePerformanceServices.delete(id)
+}
+
+export async function fetchClientMarketing() {
+  return clientMarketingServices.getAll()
+}
+
+export async function addClientMarketing(action: Omit<ClientMarketingAction, "id">) {
+  return clientMarketingServices.create(action)
+}
+
+export async function updateClientMarketing(id: string, action: Partial<ClientMarketingAction>) {
+  return clientMarketingServices.update(id, action)
+}
+
+export async function deleteClientMarketing(id: string) {
+  return clientMarketingServices.delete(id)
+}
+
+export async function fetchInternalMarketing() {
+  return internalMarketingServices.getAll()
+}
+
+export async function addInternalMarketing(action: Omit<InternalMarketingAction, "id">) {
+  return internalMarketingServices.create(action)
+}
+
+export async function updateInternalMarketing(id: string, action: Partial<InternalMarketingAction>) {
+  return internalMarketingServices.update(id, action)
+}
+
+export async function deleteInternalMarketing(id: string) {
+  return internalMarketingServices.delete(id)
+}
+
+export async function fetchRoles() {
+  return roleServices.getAll()
+}
+
+export async function addRole(role: Omit<Role, "id">) {
+  return roleServices.create(role)
+}
+
+export async function updateRole(id: string, role: Partial<Role>) {
+  return roleServices.update(id, role)
+}
+
+export async function deleteRole(id: string) {
+  return roleServices.delete(id)
+}
+
+export async function fetchCultureActions() {
+  return cultureActionServices.getAll()
+}
+
+export async function addCultureAction(action: Omit<CultureAction, "id">) {
+  return cultureActionServices.create(action)
+}
+
+export async function updateCultureAction(id: string, action: Partial<CultureAction>) {
+  return cultureActionServices.update(id, action)
+}
+
+export async function deleteCultureAction(id: string) {
+  return cultureActionServices.delete(id)
+}
+
+export async function fetchProductsServices() {
+  return productsServicesServices.getAll()
+}
+
+export async function addProductService(item: Omit<ProductService, "id">) {
+  return productsServicesServices.create(item)
+}
+
+export async function updateProductService(id: string, item: Partial<ProductService>) {
+  return productsServicesServices.update(id, item)
+}
+
+export async function deleteProductService(id: string) {
+  return productsServicesServices.delete(id)
 }
