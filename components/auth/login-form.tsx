@@ -28,7 +28,7 @@ export function LoginForm() {
     try {
       // Simulação de verificação de credenciais
       if (
-        (email === "admin@matra.com" && password === "admin123") ||
+        (email === "admin@matra.tech" && password === "admin123") ||
         (email === "jjdesigner77@gmail.com" && password === "Qweasdzxc123!")
       ) {
         // Login bem-sucedido
@@ -39,24 +39,29 @@ export function LoginForm() {
         }
 
         // Armazenar dados do usuário
-        localStorage.setItem("user", JSON.stringify(userData))
-
-        // Redirecionar para a página inicial após um breve delay
-        setTimeout(() => {
-          router.push("/")
-          router.refresh() // Forçar atualização da página
-        }, 500)
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(userData))
+        }
 
         toast({
           title: "Login realizado com sucesso",
           description: `Bem-vindo, ${userData.name}!`,
         })
+
+        // Redirecionar para a página inicial
+        router.push("/")
       } else {
         throw new Error("Credenciais inválidas")
       }
     } catch (error) {
       console.error("Erro de login:", error)
       setError("Email ou senha incorretos. Por favor, tente novamente.")
+
+      toast({
+        variant: "destructive",
+        title: "Erro ao fazer login",
+        description: "Email ou senha incorretos",
+      })
     } finally {
       setIsLoading(false)
     }

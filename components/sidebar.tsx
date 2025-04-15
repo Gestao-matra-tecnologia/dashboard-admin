@@ -63,22 +63,29 @@ function AppSidebar() {
   const router = useRouter()
 
   useEffect(() => {
-    setMounted(true)
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error("Erro ao analisar dados do usuário:", error)
-        localStorage.removeItem("user")
-        router.push("/auth/login")
+    try {
+      setMounted(true)
+      if (typeof window !== "undefined") {
+        const storedUser = localStorage.getItem("user")
+        if (storedUser) {
+          setUser(JSON.parse(storedUser))
+        }
       }
+    } catch (error) {
+      console.error("Erro ao carregar dados do usuário:", error)
     }
-  }, [router])
+  }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    router.push("/auth/login")
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("user")
+      }
+      router.push("/auth/login")
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error)
+      router.push("/auth/login")
+    }
   }
 
   if (!mounted) {

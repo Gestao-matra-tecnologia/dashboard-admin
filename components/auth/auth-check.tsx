@@ -19,20 +19,30 @@ export function AuthCheck({ children }: AuthCheckProps) {
   useEffect(() => {
     // Verificar se o usuário está autenticado
     const checkAuth = () => {
-      const user = localStorage.getItem("user")
+      try {
+        const user = typeof window !== "undefined" ? localStorage.getItem("user") : null
 
-      if (!user && pathname !== "/auth/login") {
-        router.push("/auth/login")
-      } else if (user) {
-        setIsAuthenticated(true)
-      } else {
+        if (!user && pathname !== "/auth/login") {
+          router.push("/auth/login")
+        } else if (user) {
+          setIsAuthenticated(true)
+        } else {
+          setIsAuthenticated(false)
+        }
+      } catch (error) {
+        console.error("Erro ao verificar autenticação:", error)
         setIsAuthenticated(false)
+        if (pathname !== "/auth/login") {
+          router.push("/auth/login")
+        }
+      } finally {
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     }
 
-    checkAuth()
+    // Pequeno delay para garantir que o componente está montado
+    const timer = setTimeout(checkAuth, 100)
+    return () => clearTimeout(timer)
   }, [pathname, router])
 
   if (isLoading) {

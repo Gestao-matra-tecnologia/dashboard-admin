@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Matra Tecnologia - Dashboard",
-  description: "Dashboard administrativo para Matra Tecnologia",
+  description: "Dashboard administrativo da Matra Tecnologia",
     generator: 'v0.dev'
 }
 
@@ -21,8 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.className} bg-[#071527] text-white antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <AuthCheck>{children}</AuthCheck>
           <Toaster />
         </ThemeProvider>
