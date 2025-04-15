@@ -544,3 +544,35 @@ export const internalMarketingServices = {
     mockInternalMarketingCampaigns = mockInternalMarketingCampaigns.filter((c) => c.id !== id)
   },
 }
+
+export const clientMarketingServices = {
+  getAll: async (): Promise<ClientMarketingAction[]> => {
+    await simulateApiDelay()
+    return [...mockClientMarketing]
+  },
+  create: async (action: Omit<ClientMarketingAction, "id">): Promise<ClientMarketingAction> => {
+    await simulateApiDelay()
+    const newAction = {
+      ...action,
+      id: generateId(),
+    }
+    mockClientMarketing.push(newAction)
+    return newAction
+  },
+  update: async (id: string, action: Partial<ClientMarketingAction>): Promise<ClientMarketingAction | undefined> => {
+    await simulateApiDelay()
+    const index = mockClientMarketing.findIndex((a) => a.id === id)
+    if (index !== -1) {
+      mockClientMarketing[index] = { ...mockClientMarketing[index], ...action }
+      return mockClientMarketing[index]
+    }
+    return undefined
+  },
+  delete: async (id: string): Promise<void> => {
+    await simulateApiDelay()
+    mockClientMarketing.splice(
+      mockClientMarketing.findIndex((a) => a.id === id),
+      1,
+    )
+  },
+}
