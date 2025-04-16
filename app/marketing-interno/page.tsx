@@ -1,13 +1,10 @@
-import { SidebarWrapper } from "@/components/sidebar"
 import InternalMarketing from "@/components/internal-marketing"
 
 export default function MarketingInternoPage() {
   return (
-    <SidebarWrapper>
-      <div className="container mx-auto py-6">
-        <h2 className="text-3xl font-bold tracking-tight text-white mb-6">Marketing Interno</h2>
-        <InternalMarketing />
-      </div>
-    </SidebarWrapper>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6 text-white">Marketing Interno</h1>
+      <InternalMarketing />
+    </div>
   )
 }

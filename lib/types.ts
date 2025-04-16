@@ -1,6 +1,64 @@
-// Tipos para o dashboard
+// Tipos para as tabelas do Supabase
 
-// Tipo para demandas da semana
+export interface Income {
+  id: string
+  cliente: string
+  valor: number
+  data: string
+  categoria: string
+  observacoes: string | null
+  recorrente: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Expense {
+  id: string
+  conta: string
+  descricao: string
+  valor: number
+  data: string
+  tipo: string
+  observacoes: string | null
+  pago: boolean
+  recorrente: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Employee {
+  id: string
+  nome: string
+  cargo: string
+  tipocontrato: string // Alterado para minúsculas para corresponder ao banco de dados
+  valormensal: number // Alterado para minúsculas para corresponder ao banco de dados
+  datapagamento: string // Alterado para minúsculas para corresponder ao banco de dados
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface MonthlySummary {
+  id: string
+  mes: number
+  ano: number
+  totalentradas: number // Alterado para minúsculas para corresponder ao banco de dados
+  totalsaidas: number // Alterado para minúsculas para corresponder ao banco de dados
+  lucroprejuizo: number // Alterado para minúsculas para corresponder ao banco de dados
+  metafaturamento: number // Alterado para minúsculas para corresponder ao banco de dados
+  metacaixadisponivel: number // Alterado para minúsculas para corresponder ao banco de dados
+  observacoes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface FinanceData {
+  incomes: Income[]
+  expenses: Expense[]
+  employees: Employee[]
+  monthlySummaries: MonthlySummary[]
+}
+
 export interface DemandTask {
   id: string
   title: string
@@ -10,7 +68,6 @@ export interface DemandTask {
   dueDate: string
 }
 
-// Tipo para metas por área
 export interface DepartmentGoal {
   id: string
   department: string
@@ -19,7 +76,6 @@ export interface DepartmentGoal {
   dueDate: string
 }
 
-// Tipo para desempenho dos funcionários
 export interface EmployeePerformance {
   id: string
   name: string
@@ -27,9 +83,13 @@ export interface EmployeePerformance {
   department: string
   achievements: string
   rating: number
+  score?: number
+  previousRank?: number
+  avatar?: string
+  role?: string
+  highlights?: string[]
 }
 
-// Tipo para marketing de clientes
 export interface ClientMarketingAction {
   id: string
   title: string
@@ -42,7 +102,6 @@ export interface ClientMarketingAction {
   responsible?: string
 }
 
-// Tipo para marketing interno
 export interface InternalMarketingAction {
   id: string
   title: string
@@ -52,7 +111,6 @@ export interface InternalMarketingAction {
   nextDate: string
 }
 
-// Tipo para cargos e funções
 export interface Role {
   id: string
   title: string
@@ -61,7 +119,6 @@ export interface Role {
   requiredSkills: string
 }
 
-// Tipo para ações de cultura
 export interface CultureAction {
   id: string
   title: string
@@ -71,7 +128,6 @@ export interface CultureAction {
   responsible: string
 }
 
-// Tipo para produtos e serviços
 export interface ProductService {
   id: string
   name: string
@@ -80,7 +136,6 @@ export interface ProductService {
   status: "active" | "inactive"
 }
 
-// Tipo para dados do funil de vendas
 export interface FunnelData {
   leads: number
   inProgress: number
@@ -88,7 +143,6 @@ export interface FunnelData {
   totalValue: number
 }
 
-// Tipo para métricas de visão geral
 export interface OverviewMetrics {
   totalRevenue: number
   totalExpenses: number
@@ -96,4 +150,13 @@ export interface OverviewMetrics {
   clients: number
   projects: number
   tasks: number
+}
+
+export interface DemandItem {
+  id: string
+  title: string
+  priority: "Alta" | "Média" | "Baixa"
+  status: "Pendente" | "Em andamento" | "Concluído"
+  assignedTo: string
+  dueDate: string
 }

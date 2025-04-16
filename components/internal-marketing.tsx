@@ -17,7 +17,78 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { internalMarketingServices, type InternalMarketingCampaign } from "@/lib/mock-services"
+
+// Definição do tipo para campanhas de marketing interno
+export interface InternalMarketingCampaign {
+  id: string
+  campanha: string
+  objetivo: string
+  responsavel: string
+  status: "Planejado" | "Em andamento" | "Finalizado"
+  dataDisparo: string
+  tipoConteudo: string
+}
+
+// Mock data para campanhas de marketing interno
+const mockCampaigns: InternalMarketingCampaign[] = [
+  {
+    id: "1",
+    campanha: "Newsletter semanal",
+    objetivo: "Manter equipe informada sobre atualizações",
+    responsavel: "Ana",
+    status: "Em andamento",
+    dataDisparo: "2025-04-22",
+    tipoConteudo: "Email",
+  },
+  {
+    id: "2",
+    campanha: "Treinamento de marca",
+    objetivo: "Fortalecer identidade da empresa",
+    responsavel: "Carlos",
+    status: "Planejado",
+    dataDisparo: "2025-05-10",
+    tipoConteudo: "Workshop",
+  },
+  {
+    id: "3",
+    campanha: "Pesquisa de satisfação",
+    objetivo: "Avaliar clima organizacional",
+    responsavel: "Juliana",
+    status: "Finalizado",
+    dataDisparo: "2025-04-15",
+    tipoConteudo: "Formulário",
+  },
+]
+
+// Serviços simulados para campanhas de marketing interno
+const internalMarketingServices = {
+  getAll: () => [...mockCampaigns],
+  getById: (id: string) => mockCampaigns.find((campaign) => campaign.id === id),
+  create: (campaign: Omit<InternalMarketingCampaign, "id">) => {
+    const newCampaign = {
+      id: Math.random().toString(36).substr(2, 9),
+      ...campaign,
+    }
+    mockCampaigns.push(newCampaign)
+    return newCampaign
+  },
+  update: (id: string, campaign: Partial<InternalMarketingCampaign>) => {
+    const index = mockCampaigns.findIndex((c) => c.id === id)
+    if (index !== -1) {
+      mockCampaigns[index] = { ...mockCampaigns[index], ...campaign }
+      return mockCampaigns[index]
+    }
+    return null
+  },
+  delete: (id: string) => {
+    const index = mockCampaigns.findIndex((c) => c.id === id)
+    if (index !== -1) {
+      mockCampaigns.splice(index, 1)
+      return true
+    }
+    return false
+  },
+}
 
 export default function InternalMarketing() {
   const [campaigns, setCampaigns] = useState<InternalMarketingCampaign[]>([])
@@ -40,13 +111,25 @@ export default function InternalMarketing() {
 
   // Carregar dados
   useEffect(() => {
-    const loadCampaigns = async () => {
+    const loadCampaigns = () => {
       setIsLoading(true)
       try {
+        // Garantir que estamos recebendo um array
         const data = internalMarketingServices.getAll()
-        setCampaigns(data)
+        if (Array.isArray(data)) {
+          setCampaigns(data)
+        } else {
+          console.error("Dados recebidos não são um array:", data)
+          setCampaigns([]) // Inicializa como array vazio em caso de erro
+          toast({
+            title: "Erro ao carregar dados",
+            description: "Formato de dados inválido.",
+            variant: "destructive",
+          })
+        }
       } catch (error) {
         console.error("Erro ao carregar campanhas:", error)
+        setCampaigns([]) // Inicializa como array vazio em caso de erro
         toast({
           title: "Erro ao carregar dados",
           description: "Não foi possível carregar as campanhas de marketing interno.",
@@ -60,23 +143,25 @@ export default function InternalMarketing() {
     loadCampaigns()
   }, [toast])
 
-  // Filtrar campanhas
-  const filteredCampaigns = campaigns.filter((campanha) => {
-    if (statusFilter !== "todos" && campanha.status !== statusFilter) return false
-    if (
-      searchTerm &&
-      !campanha.campanha.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !campanha.objetivo.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-      return false
-    return true
-  })
+  // Filtrar campanhas - garantindo que campaigns é um array antes de filtrar
+  const filteredCampaigns = Array.isArray(campaigns)
+    ? campaigns.filter((campanha) => {
+        if (statusFilter !== "todos" && campanha.status !== statusFilter) return false
+        if (
+          searchTerm &&
+          !campanha.campanha.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          !campanha.objetivo.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+          return false
+        return true
+      })
+    : []
 
   // Adicionar nova campanha
   const handleAddCampaign = () => {
     try {
       const createdCampaign = internalMarketingServices.create(newCampaign)
-      setCampaigns([...campaigns, createdCampaign])
+      setCampaigns((prev) => (Array.isArray(prev) ? [...prev, createdCampaign] : [createdCampaign]))
       setIsAddDialogOpen(false)
       setNewCampaign({
         campanha: "",
@@ -107,7 +192,11 @@ export default function InternalMarketing() {
     try {
       const updatedCampaign = internalMarketingServices.update(currentCampaign.id, currentCampaign)
       if (updatedCampaign) {
-        setCampaigns(campaigns.map((campaign) => (campaign.id === updatedCampaign.id ? updatedCampaign : campaign)))
+        setCampaigns((prev) =>
+          Array.isArray(prev)
+            ? prev.map((campaign) => (campaign.id === updatedCampaign.id ? updatedCampaign : campaign))
+            : [updatedCampaign],
+        )
         setIsEditDialogOpen(false)
         setCurrentCampaign(null)
         toast({
@@ -129,7 +218,7 @@ export default function InternalMarketing() {
   const handleDeleteCampaign = (id: string) => {
     try {
       internalMarketingServices.delete(id)
-      setCampaigns(campaigns.filter((campaign) => campaign.id !== id))
+      setCampaigns((prev) => (Array.isArray(prev) ? prev.filter((campaign) => campaign.id !== id) : []))
       toast({
         title: "Campanha removida",
         description: "A campanha foi removida com sucesso.",
