@@ -1,13 +1,15 @@
-import { SidebarWrapper } from "@/components/sidebar"
-import CultureActions from "@/components/culture-actions"
+"use client"
+
+import { Suspense } from "react"
+import CultureActions from "../components/culture-actions"
 
 export default function CulturaPage() {
   return (
-    <SidebarWrapper>
-      <div className="container mx-auto py-6">
-        <h2 className="text-3xl font-bold tracking-tight text-white mb-6">Ações de Cultura</h2>
+    <div className="container mx-auto py-6">
+      <h1 className="text-2xl font-bold mb-6">Cultura Organizacional</h1>
+      <Suspense fallback={<div>Carregando...</div>}>
         <CultureActions />
-      </div>
-    </SidebarWrapper>
+      </Suspense>
+    </div>
   )
 }
