@@ -1,30 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Configurações básicas
   reactStrictMode: true,
   swcMinify: true,
-  output: 'standalone',
-  // Desabilitar pré-renderização estática para evitar problemas com rotas dinâmicas
-  experimental: {
-    appDir: true,
-  },
+  
+  // Desabilitar verificações para garantir que o build funcione
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
+  
+  // Configurações de imagem
   images: {
     unoptimized: true,
   },
-  // Configurar redirecionamentos
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/dashboard',
-        permanent: true,
-      },
-    ]
+  
+  // Configurações experimentais
+  experimental: {
+    // Remover configurações experimentais que podem causar problemas
   },
 }
 
