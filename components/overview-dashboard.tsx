@@ -9,6 +9,7 @@ import { MiniBarChart } from "./ui/mini-bar-chart"
 import { getFinanceData } from "@/lib/supabase/services"
 import type { ClientMarketingAction } from "@/lib/types"
 import { clientMarketingServices } from "@/lib/mock-services"
+import { getFunnelData } from "@/lib/services/funnel-services"
 
 // Dados para o gráfico de barras de metas
 const goalData = [
@@ -31,18 +32,21 @@ export default function OverviewDashboard() {
       value: 0,
       percentage: 100,
       color: "#22d3ee",
+      revenue: 0,
     },
     inProgress: {
       label: "Em Atendimento",
       value: 0,
       percentage: 0,
       color: "#c084fc",
+      revenue: 0,
     },
     closed: {
       label: "Fechados",
       value: 0,
       percentage: 0,
       color: "#4ade80",
+      revenue: 0,
     },
   })
 
@@ -60,33 +64,77 @@ export default function OverviewDashboard() {
         const marketing = await clientMarketingServices.getAll()
         setMarketingData(marketing)
 
-        // Calcular dados do funil
-        const leads = marketing.filter((item) => item.status === "Lead").length
-        const inProgress = marketing.filter((item) => item.status === "Em atendimento").length
-        const closed = marketing.filter((item) => item.status === "Fechado").length
+        // Carregar dados do funil
+        const funnelDataResult = await getFunnelData()
 
-        // Atualizar dados do funil
-        if (leads > 0) {
+        if (funnelDataResult) {
+          // Atualizar dados do funil com dados dinâmicos
           setFunnelData({
             leads: {
               label: "Leads Novos",
-              value: leads,
+              value: funnelDataResult.leads,
               percentage: 100,
               color: "#22d3ee",
+              revenue: funnelDataResult.leadsRevenue,
             },
             inProgress: {
               label: "Em Atendimento",
-              value: inProgress,
-              percentage: Math.round((inProgress / leads) * 100),
+              value: funnelDataResult.inProgress,
+              percentage:
+                funnelDataResult.leads > 0
+                  ? Math.round((funnelDataResult.inProgress / funnelDataResult.leads) * 100)
+                  : 0,
               color: "#c084fc",
+              revenue: funnelDataResult.inProgressRevenue,
             },
             closed: {
               label: "Fechados",
-              value: closed,
-              percentage: Math.round((closed / leads) * 100),
+              value: funnelDataResult.closed,
+              percentage:
+                funnelDataResult.leads > 0 ? Math.round((funnelDataResult.closed / funnelDataResult.leads) * 100) : 0,
               color: "#4ade80",
+              revenue: funnelDataResult.closedRevenue,
             },
           })
+        } else {
+          // Se não houver dados do funil, usar dados do marketing
+          const leads = marketing.filter((item) => item.status === "Lead").length
+          const inProgress = marketing.filter((item) => item.status === "Em atendimento").length
+          const closed = marketing.filter((item) => item.status === "Fechado").length
+
+          // Calcular valores de receita
+          const avgTicket =
+            marketing.length > 0
+              ? marketing.filter((item) => item.status === "Fechado").reduce((sum, item) => sum + item.budget, 0) /
+                Math.max(1, marketing.filter((item) => item.status === "Fechado").length)
+              : 2000
+
+          // Atualizar dados do funil
+          if (leads > 0) {
+            setFunnelData({
+              leads: {
+                label: "Leads Novos",
+                value: leads,
+                percentage: 100,
+                color: "#22d3ee",
+                revenue: leads * avgTicket,
+              },
+              inProgress: {
+                label: "Em Atendimento",
+                value: inProgress,
+                percentage: Math.round((inProgress / leads) * 100),
+                color: "#c084fc",
+                revenue: inProgress * avgTicket,
+              },
+              closed: {
+                label: "Fechados",
+                value: closed,
+                percentage: Math.round((closed / leads) * 100),
+                color: "#4ade80",
+                revenue: closed * avgTicket,
+              },
+            })
+          }
         }
 
         setLoading(false)
@@ -232,7 +280,7 @@ export default function OverviewDashboard() {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
               </div>
             ) : (
-              <SalesFunnel data={funnelData} height={280} />
+              <SalesFunnel data={funnelData} height={280} showRevenue={true} />
             )}
           </CardContent>
         </Card>

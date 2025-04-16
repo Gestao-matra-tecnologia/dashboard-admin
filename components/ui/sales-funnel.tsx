@@ -2,23 +2,25 @@
 
 import { useEffect, useRef } from "react"
 
-interface FunnelStage {
+export interface FunnelStage {
   label: string
   value: number
   percentage: number
   color: string
+  revenue?: number // Adicionando campo de receita
 }
 
-interface SalesFunnelProps {
+export interface SalesFunnelProps {
   data: {
     leads: FunnelStage
     inProgress: FunnelStage
     closed: FunnelStage
   }
   height: number
+  showRevenue?: boolean // Nova propriedade para mostrar receita
 }
 
-export function SalesFunnel({ data, height }: SalesFunnelProps) {
+export function SalesFunnel({ data, height, showRevenue = false }: SalesFunnelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -75,6 +77,13 @@ export function SalesFunnel({ data, height }: SalesFunnelProps) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
     ctx.fillText(`${data.leads.percentage}%`, width / 2, stageHeight / 2 + 25)
 
+    // Adicionar informação de receita se showRevenue for true
+    if (showRevenue && data.leads.revenue !== undefined) {
+      ctx.font = "12px Arial"
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+      ctx.fillText(`R$ ${data.leads.revenue.toLocaleString()}`, width / 2, stageHeight / 2 + 45)
+    }
+
     // Middle label
     ctx.font = "bold 14px Arial"
     ctx.fillStyle = "#ffffff"
@@ -85,6 +94,13 @@ export function SalesFunnel({ data, height }: SalesFunnelProps) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
     ctx.fillText(`${data.inProgress.percentage}%`, width / 2, stageHeight * 1.5 + 25)
 
+    // Adicionar informação de receita se showRevenue for true
+    if (showRevenue && data.inProgress.revenue !== undefined) {
+      ctx.font = "12px Arial"
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+      ctx.fillText(`R$ ${data.inProgress.revenue.toLocaleString()}`, width / 2, stageHeight * 1.5 + 45)
+    }
+
     // Bottom label
     ctx.font = "bold 14px Arial"
     ctx.fillStyle = "#ffffff"
@@ -94,7 +110,14 @@ export function SalesFunnel({ data, height }: SalesFunnelProps) {
     ctx.font = "12px Arial"
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
     ctx.fillText(`${data.closed.percentage}%`, width / 2, stageHeight * 2.5 + 25)
-  }, [data, height])
+
+    // Adicionar informação de receita se showRevenue for true
+    if (showRevenue && data.closed.revenue !== undefined) {
+      ctx.font = "12px Arial"
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+      ctx.fillText(`R$ ${data.closed.revenue.toLocaleString()}`, width / 2, stageHeight * 2.5 + 45)
+    }
+  }, [data, height, showRevenue])
 
   // Helper function to draw a trapezoid
   function drawTrapezoid(

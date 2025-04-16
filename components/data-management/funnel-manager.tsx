@@ -1,509 +1,286 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { clientMarketingServices } from "@/lib/mock-services"
-import type { ClientMarketingAction } from "@/lib/types"
-import { PlusCircle, Edit2, Trash2 } from "lucide-react"
+import { SalesFunnel } from "@/components/ui/sales-funnel"
+import {
+  funnelServices,
+  type FunnelData,
+  addNewLeads,
+  moveLeadsToInProgress,
+  moveInProgressToClosed,
+  generateRandomFunnelData,
+} from "@/lib/services/funnel-services"
 
 export default function FunnelManager() {
-  const [actions, setActions] = useState<ClientMarketingAction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentAction, setCurrentAction] = useState<ClientMarketingAction | null>(null)
-  const [formData, setFormData] = useState({
-    client: "",
-    action: "",
-    status: "lead",
-    date: "",
-    budget: "",
-    responsible: "",
-  })
-  const [stats, setStats] = useState({
-    leads: 0,
-    inProgress: 0,
-    closed: 0,
-    totalBudget: 0,
+  const [loading, setLoading] = useState(true)
+  const [funnelData, setFunnelData] = useState<FunnelData | null>(null)
+  const [newLeadsCount, setNewLeadsCount] = useState<number>(0)
+  const [newLeadsValue, setNewLeadsValue] = useState<number>(2000)
+  const [moveToInProgressCount, setMoveToInProgressCount] = useState<number>(0)
+  const [moveToClosedCount, setMoveToClosedCount] = useState<number>(0)
+  const [displayFunnelData, setDisplayFunnelData] = useState({
+    leads: {
+      label: "Leads Novos",
+      value: 0,
+      percentage: 100,
+      color: "#22d3ee",
+      revenue: 0,
+    },
+    inProgress: {
+      label: "Em Atendimento",
+      value: 0,
+      percentage: 0,
+      color: "#c084fc",
+      revenue: 0,
+    },
+    closed: {
+      label: "Fechados",
+      value: 0,
+      percentage: 0,
+      color: "#4ade80",
+      revenue: 0,
+    },
   })
 
+  // Carregar dados do funil
   useEffect(() => {
-    fetchActions()
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        const data = await funnelServices.getLatest()
+
+        if (data) {
+          setFunnelData(data)
+          updateDisplayFunnel(data)
+        } else {
+          // Se não houver dados, gerar dados aleatórios
+          const newData = await generateRandomFunnelData()
+          setFunnelData(newData)
+          updateDisplayFunnel(newData)
+        }
+
+        setLoading(false)
+      } catch (error) {
+        console.error("Erro ao carregar dados do funil:", error)
+        setLoading(false)
+      }
+    }
+
+    loadData()
   }, [])
 
-  const fetchActions = async () => {
-    try {
-      setIsLoading(true)
-      const data = await clientMarketingServices.getAll()
-      setActions(data)
-      calculateStats(data)
-    } catch (error) {
-      console.error("Erro ao buscar ações:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const calculateStats = (data: ClientMarketingAction[]) => {
-    const leads = data.filter((item) => item.status === "lead").length
-    const inProgress = data.filter((item) => item.status === "em atendimento").length
-    const closed = data.filter((item) => item.status === "fechado").length
-    const totalBudget = data.reduce((sum, item) => sum + Number(item.budget), 0)
-
-    setStats({
-      leads,
-      inProgress,
-      closed,
-      totalBudget,
+  // Função para atualizar os dados de exibição do funil
+  const updateDisplayFunnel = (data: FunnelData) => {
+    setDisplayFunnelData({
+      leads: {
+        label: "Leads Novos",
+        value: data.leads,
+        percentage: 100,
+        color: "#22d3ee",
+        revenue: data.leadsRevenue,
+      },
+      inProgress: {
+        label: "Em Atendimento",
+        value: data.inProgress,
+        percentage: data.leads > 0 ? Math.round((data.inProgress / data.leads) * 100) : 0,
+        color: "#c084fc",
+        revenue: data.inProgressRevenue,
+      },
+      closed: {
+        label: "Fechados",
+        value: data.closed,
+        percentage: data.leads > 0 ? Math.round((data.closed / data.leads) * 100) : 0,
+        color: "#4ade80",
+        revenue: data.closedRevenue,
+      },
     })
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  // Função para adicionar novos leads
+  const handleAddLeads = async () => {
+    if (newLeadsCount <= 0) return
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const resetForm = () => {
-    setFormData({
-      client: "",
-      action: "",
-      status: "lead",
-      date: "",
-      budget: "",
-      responsible: "",
-    })
-  }
-
-  const handleAddAction = async () => {
     try {
-      // Validar campos obrigatórios
-      if (!formData.client || !formData.action || !formData.status || !formData.date) {
-        alert("Por favor, preencha todos os campos obrigatórios.")
-        return
-      }
-
-      const newAction = {
-        ...formData,
-        budget: Number(formData.budget) || 0,
-        id: Date.now().toString(), // ID temporário
-      }
-
-      // Usar o método create em vez de add
-      await clientMarketingServices.create(newAction)
-      await fetchActions() // Recarregar dados
-      setIsAddDialogOpen(false)
-      resetForm()
+      setLoading(true)
+      const updatedData = await addNewLeads(newLeadsCount, newLeadsValue)
+      setFunnelData(updatedData)
+      updateDisplayFunnel(updatedData)
+      setNewLeadsCount(0)
+      setLoading(false)
     } catch (error) {
-      console.error("Erro ao adicionar ação:", error)
-      alert(`Erro ao adicionar ação: ${error}`)
+      console.error("Erro ao adicionar leads:", error)
+      setLoading(false)
     }
   }
 
-  const handleEditAction = async () => {
+  // Função para mover leads para "Em Atendimento"
+  const handleMoveToInProgress = async () => {
+    if (moveToInProgressCount <= 0 || !funnelData) return
+
     try {
-      if (!currentAction) return
-
-      const updatedAction = {
-        ...currentAction,
-        ...formData,
-        budget: Number(formData.budget) || 0,
-      }
-
-      await clientMarketingServices.update(updatedAction)
-      await fetchActions() // Recarregar dados
-      setIsEditDialogOpen(false)
-      setCurrentAction(null)
-      resetForm()
+      setLoading(true)
+      const updatedData = await moveLeadsToInProgress(moveToInProgressCount)
+      setFunnelData(updatedData)
+      updateDisplayFunnel(updatedData)
+      setMoveToInProgressCount(0)
+      setLoading(false)
     } catch (error) {
-      console.error("Erro ao editar ação:", error)
+      console.error("Erro ao mover leads para Em Atendimento:", error)
+      setLoading(false)
     }
   }
 
-  const handleDeleteAction = async () => {
-    try {
-      if (!currentAction) return
+  // Função para mover "Em Atendimento" para "Fechados"
+  const handleMoveToClosed = async () => {
+    if (moveToClosedCount <= 0 || !funnelData) return
 
-      await clientMarketingServices.delete(currentAction.id)
-      await fetchActions() // Recarregar dados
-      setIsDeleteDialogOpen(false)
-      setCurrentAction(null)
+    try {
+      setLoading(true)
+      const updatedData = await moveInProgressToClosed(moveToClosedCount)
+      setFunnelData(updatedData)
+      updateDisplayFunnel(updatedData)
+      setMoveToClosedCount(0)
+      setLoading(false)
     } catch (error) {
-      console.error("Erro ao excluir ação:", error)
+      console.error("Erro ao mover leads para Fechados:", error)
+      setLoading(false)
     }
   }
 
-  const openEditDialog = (action: ClientMarketingAction) => {
-    setCurrentAction(action)
-    setFormData({
-      client: action.client,
-      action: action.action,
-      status: action.status,
-      date: action.date,
-      budget: action.budget.toString(),
-      responsible: action.responsible || "",
-    })
-    setIsEditDialogOpen(true)
-  }
-
-  const openDeleteDialog = (action: ClientMarketingAction) => {
-    setCurrentAction(action)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "lead":
-        return "bg-blue-500"
-      case "em atendimento":
-        return "bg-yellow-500"
-      case "fechado":
-        return "bg-green-500"
-      default:
-        return "bg-gray-500"
+  // Função para gerar dados aleatórios
+  const handleGenerateRandomData = async () => {
+    try {
+      setLoading(true)
+      const newData = await generateRandomFunnelData()
+      setFunnelData(newData)
+      updateDisplayFunnel(newData)
+      setLoading(false)
+    } catch (error) {
+      console.error("Erro ao gerar dados aleatórios:", error)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Gerenciamento do Funil de Vendas</h2>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-cyan-600 hover:bg-cyan-700">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nova Ação
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#0f2744] border-[#1e3a5f] text-white">
-            <DialogHeader>
-              <DialogTitle>Adicionar Nova Ação</DialogTitle>
-              <DialogDescription className="text-slate-300">
-                Preencha os dados para adicionar uma nova ação ao funil de vendas.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="client">Cliente</Label>
-                  <Input
-                    id="client"
-                    name="client"
-                    value={formData.client}
-                    onChange={handleInputChange}
-                    className="bg-[#0a1929] border-[#1e3a5f]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="action">Ação</Label>
-                  <Input
-                    id="action"
-                    name="action"
-                    value={formData.action}
-                    onChange={handleInputChange}
-                    className="bg-[#0a1929] border-[#1e3a5f]"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-                    <SelectTrigger className="bg-[#0a1929] border-[#1e3a5f]">
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0f2744] border-[#1e3a5f]">
-                      <SelectItem value="lead">Lead</SelectItem>
-                      <SelectItem value="em atendimento">Em Atendimento</SelectItem>
-                      <SelectItem value="fechado">Fechado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
-                  <Input
-                    id="date"
-                    name="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className="bg-[#0a1929] border-[#1e3a5f]"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Orçamento (R$)</Label>
-                  <Input
-                    id="budget"
-                    name="budget"
-                    type="number"
-                    value={formData.budget}
-                    onChange={handleInputChange}
-                    className="bg-[#0a1929] border-[#1e3a5f]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="responsible">Responsável</Label>
-                  <Input
-                    id="responsible"
-                    name="responsible"
-                    value={formData.responsible}
-                    onChange={handleInputChange}
-                    className="bg-[#0a1929] border-[#1e3a5f]"
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={handleAddAction}>
-                Adicionar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Estatísticas do Funil */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-[#0f2744] border-[#1e3a5f]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-400">{stats.leads}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#0f2744] border-[#1e3a5f]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Em Atendimento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-400">{stats.inProgress}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#0f2744] border-[#1e3a5f]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Fechados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-400">{stats.closed}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#0f2744] border-[#1e3a5f]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Orçamento Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-cyan-400">R$ {stats.totalBudget.toLocaleString("pt-BR")}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabela de Ações */}
-      <Card className="bg-[#0f2744] border-[#1e3a5f]">
-        <CardHeader>
-          <CardTitle className="text-white">Ações do Funil</CardTitle>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="bg-[#0f2744] border-[#1e3a5f] text-white shadow-lg">
+        <CardHeader className="pb-2 pt-4 border-b border-[#1e3a5f]">
+          <CardTitle className="text-lg text-white">Funil de Vendas</CardTitle>
         </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
+        <CardContent className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center h-[300px]">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-[#1e3a5f] hover:bg-[#0a1929]">
-                  <TableHead className="text-slate-300">Cliente</TableHead>
-                  <TableHead className="text-slate-300">Ação</TableHead>
-                  <TableHead className="text-slate-300">Status</TableHead>
-                  <TableHead className="text-slate-300">Data</TableHead>
-                  <TableHead className="text-slate-300">Orçamento</TableHead>
-                  <TableHead className="text-slate-300">Responsável</TableHead>
-                  <TableHead className="text-slate-300 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {actions.length === 0 ? (
-                  <TableRow className="border-[#1e3a5f]">
-                    <TableCell colSpan={7} className="text-center text-slate-400">
-                      Nenhuma ação encontrada
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  actions.map((action) => (
-                    <TableRow key={action.id} className="border-[#1e3a5f] hover:bg-[#0a1929]">
-                      <TableCell className="font-medium text-white">{action.client}</TableCell>
-                      <TableCell className="text-slate-300">{action.action}</TableCell>
-                      <TableCell>
-                        <Badge className={`${getStatusColor(action.status)}`}>{action.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-300">{action.date}</TableCell>
-                      <TableCell className="text-slate-300">R$ {action.budget.toLocaleString("pt-BR")}</TableCell>
-                      <TableCell className="text-slate-300">{action.responsible}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditDialog(action)}
-                            className="h-8 w-8 text-slate-300 hover:text-white hover:bg-[#1e3a5f]"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openDeleteDialog(action)}
-                            className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-[#1e3a5f]"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <SalesFunnel data={displayFunnelData} height={300} showRevenue={true} />
           )}
         </CardContent>
       </Card>
 
-      {/* Dialog de Edição */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-[#0f2744] border-[#1e3a5f] text-white">
-          <DialogHeader>
-            <DialogTitle>Editar Ação</DialogTitle>
-            <DialogDescription className="text-slate-300">Edite os dados da ação selecionada.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-client">Cliente</Label>
-                <Input
-                  id="edit-client"
-                  name="client"
-                  value={formData.client}
-                  onChange={handleInputChange}
-                  className="bg-[#0a1929] border-[#1e3a5f]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-action">Ação</Label>
-                <Input
-                  id="edit-action"
-                  name="action"
-                  value={formData.action}
-                  onChange={handleInputChange}
-                  className="bg-[#0a1929] border-[#1e3a5f]"
-                />
-              </div>
+      <Card className="bg-[#0f2744] border-[#1e3a5f] text-white shadow-lg">
+        <CardHeader className="pb-2 pt-4 border-b border-[#1e3a5f]">
+          <CardTitle className="text-lg text-white">Gerenciar Funil</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          {loading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-                  <SelectTrigger className="bg-[#0a1929] border-[#1e3a5f]">
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0f2744] border-[#1e3a5f]">
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="em atendimento">Em Atendimento</SelectItem>
-                    <SelectItem value="fechado">Fechado</SelectItem>
-                  </SelectContent>
-                </Select>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-white">Adicionar Novos Leads</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newLeadsCount">Quantidade</Label>
+                    <Input
+                      id="newLeadsCount"
+                      type="number"
+                      min="0"
+                      value={newLeadsCount}
+                      onChange={(e) => setNewLeadsCount(Number.parseInt(e.target.value) || 0)}
+                      className="bg-[#163456] border-[#1e3a5f] text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newLeadsValue">Valor Médio (R$)</Label>
+                    <Input
+                      id="newLeadsValue"
+                      type="number"
+                      min="0"
+                      value={newLeadsValue}
+                      onChange={(e) => setNewLeadsValue(Number.parseInt(e.target.value) || 0)}
+                      className="bg-[#163456] border-[#1e3a5f] text-white"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleAddLeads}
+                  disabled={newLeadsCount <= 0}
+                  className="w-full bg-cyan-600 hover:bg-cyan-700"
+                >
+                  Adicionar Leads
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-date">Data</Label>
-                <Input
-                  id="edit-date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  className="bg-[#0a1929] border-[#1e3a5f]"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-budget">Orçamento (R$)</Label>
-                <Input
-                  id="edit-budget"
-                  name="budget"
-                  type="number"
-                  value={formData.budget}
-                  onChange={handleInputChange}
-                  className="bg-[#0a1929] border-[#1e3a5f]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-responsible">Responsável</Label>
-                <Input
-                  id="edit-responsible"
-                  name="responsible"
-                  value={formData.responsible}
-                  onChange={handleInputChange}
-                  className="bg-[#0a1929] border-[#1e3a5f]"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={handleEditAction}>
-              Salvar Alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Dialog de Exclusão */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="bg-[#0f2744] border-[#1e3a5f] text-white">
-          <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
-            <DialogDescription className="text-slate-300">
-              Tem certeza que deseja excluir esta ação? Esta operação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteAction}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-white">Mover para Em Atendimento</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="moveToInProgressCount">Quantidade (máx: {funnelData?.leads || 0})</Label>
+                  <Input
+                    id="moveToInProgressCount"
+                    type="number"
+                    min="0"
+                    max={funnelData?.leads || 0}
+                    value={moveToInProgressCount}
+                    onChange={(e) => setMoveToInProgressCount(Number.parseInt(e.target.value) || 0)}
+                    className="bg-[#163456] border-[#1e3a5f] text-white"
+                  />
+                </div>
+                <Button
+                  onClick={handleMoveToInProgress}
+                  disabled={moveToInProgressCount <= 0 || moveToInProgressCount > (funnelData?.leads || 0)}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  Mover para Em Atendimento
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-white">Mover para Fechados</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="moveToClosedCount">Quantidade (máx: {funnelData?.inProgress || 0})</Label>
+                  <Input
+                    id="moveToClosedCount"
+                    type="number"
+                    min="0"
+                    max={funnelData?.inProgress || 0}
+                    value={moveToClosedCount}
+                    onChange={(e) => setMoveToClosedCount(Number.parseInt(e.target.value) || 0)}
+                    className="bg-[#163456] border-[#1e3a5f] text-white"
+                  />
+                </div>
+                <Button
+                  onClick={handleMoveToClosed}
+                  disabled={moveToClosedCount <= 0 || moveToClosedCount > (funnelData?.inProgress || 0)}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  Mover para Fechados
+                </Button>
+              </div>
+
+              <Button onClick={handleGenerateRandomData} className="w-full bg-blue-600 hover:bg-blue-700">
+                Gerar Dados Aleatórios
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
