@@ -1,12 +1,6 @@
-import { SidebarWrapper } from "@/components/sidebar"
-import OverviewDashboard from "@/components/overview-dashboard"
+import { redirect } from "next/navigation"
 
 export default function Home() {
-  return (
-    <SidebarWrapper>
-      <div className="container mx-auto py-6">
-        <OverviewDashboard />
-      </div>
-    </SidebarWrapper>
-  )
+  // Redirecionar para o dashboard principal
+  redirect("/dashboard")
 }
