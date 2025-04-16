@@ -97,22 +97,3 @@ export interface OverviewMetrics {
   projects: number
   tasks: number
 }
-
-// Tipo para notificações
-export interface Notification {
-  id: string
-  title: string
-  message: string
-  type: "info" | "success" | "warning" | "error"
-  read: boolean
-  createdAt: string
-}
-
-// Tipo para usuário
-export interface User {
-  id?: string
-  name: string
-  email: string
-  role: "admin" | "manager" | "user"
-  avatar?: string
-}

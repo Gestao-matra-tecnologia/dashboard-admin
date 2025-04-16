@@ -18,10 +18,6 @@ import {
   Heart,
   Megaphone,
   UserCheck,
-  FileBarChart,
-  LogOut,
-  Calendar,
-  HelpCircle,
 } from "lucide-react"
 import {
   Sidebar,
@@ -37,8 +33,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useMobile } from "@/hooks/use-mobile"
-import { NotificationCenter } from "@/components/notifications/notification-center"
-import { useRouter } from "next/navigation"
 
 interface SidebarWrapperProps {
   children: React.ReactNode
@@ -59,34 +53,10 @@ function AppSidebar() {
   const pathname = usePathname()
   const isMobile = useMobile()
   const [mounted, setMounted] = useState(false)
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
-    try {
-      setMounted(true)
-      if (typeof window !== "undefined") {
-        const storedUser = localStorage.getItem("user")
-        if (storedUser) {
-          setUser(JSON.parse(storedUser))
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar dados do usuário:", error)
-    }
+    setMounted(true)
   }, [])
-
-  const handleLogout = () => {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("user")
-      }
-      router.push("/auth/login")
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error)
-      router.push("/auth/login")
-    }
-  }
 
   if (!mounted) {
     return null
@@ -153,30 +123,6 @@ function AppSidebar() {
       icon: Database,
       current: pathname === "/gerenciamento",
     },
-    {
-      name: "Relatórios",
-      href: "/relatorios",
-      icon: FileBarChart,
-      current: pathname === "/relatorios",
-    },
-    {
-      name: "Eventos",
-      href: "/eventos",
-      icon: Calendar,
-      current: pathname === "/eventos",
-    },
-    {
-      name: "Configurações",
-      href: "/configuracoes",
-      icon: Settings,
-      current: pathname === "/configuracoes",
-    },
-    {
-      name: "Ajuda e Suporte",
-      href: "/ajuda",
-      icon: HelpCircle,
-      current: pathname === "/ajuda",
-    },
   ]
 
   return (
@@ -206,22 +152,19 @@ function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center justify-between px-3 py-2">
+        <div className="px-3 py-2">
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
               <AvatarImage src="/placeholder.svg?height=36&width=36" alt="Avatar" />
-              <AvatarFallback className="bg-cyan-700">{user?.name?.charAt(0) || "U"}</AvatarFallback>
+              <AvatarFallback className="bg-cyan-700">MT</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-white">{user?.name || "Usuário"}</span>
-              <span className="text-xs text-slate-400">{user?.email || "usuario@email.com"}</span>
+              <span className="text-sm font-medium text-white">Admin</span>
+              <span className="text-xs text-slate-400">admin@matra.tech</span>
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <NotificationCenter />
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-              <span className="sr-only">Sair</span>
+            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8">
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">Configurações</span>
             </Button>
           </div>
         </div>
