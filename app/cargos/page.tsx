@@ -1,13 +1,15 @@
-import { SidebarWrapper } from "@/components/sidebar"
+"use client"
+
+import { Suspense } from "react"
 import RolesTable from "@/components/roles-table"
 
-export default function CargosPage() {
+export default function RolesPage() {
   return (
-    <SidebarWrapper>
-      <div className="container mx-auto py-6">
-        <h2 className="text-3xl font-bold tracking-tight text-white mb-6">Cargos e Funções</h2>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold text-white mb-6">Cargos e Funções</h1>
+      <Suspense fallback={<div className="text-white">Carregando...</div>}>
         <RolesTable />
-      </div>
-    </SidebarWrapper>
+      </Suspense>
+    </div>
   )
 }
